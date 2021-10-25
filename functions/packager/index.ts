@@ -1,12 +1,6 @@
-import { Callback, Context } from "aws-lambda";
-import { S3 } from "aws-sdk";
-
 import { fs } from "mz";
 import * as path from "path";
-import * as Raven from "raven";
 import * as rimraf from "rimraf";
-import * as zlib from "zlib";
-import fetch from "node-fetch";
 
 import findDependencyDependencies from "./dependencies/find-dependency-dependencies";
 import installDependencies from "./dependencies/install-dependencies";
@@ -15,68 +9,6 @@ import findPackageInfos, { IPackage } from "./packages/find-package-infos";
 import findRequires, { IFileData } from "./packages/find-requires";
 
 import getHash from "./utils/get-hash";
-
-import { VERSION } from "../config";
-import env from "./config.secret";
-import resolve = require("resolve");
-import { packageFilter } from "./utils/resolver";
-
-const { BUCKET_NAME } = process.env;
-const SAVE_TO_S3 = !process.env.DISABLE_CACHING;
-
-if (env.SENTRY_URL) {
-  Raven.config(env.SENTRY_URL!).install();
-}
-
-const s3 = new S3();
-
-/**
- * Remove a file from the content
- *
- * @param {IFileData} data
- * @param {string} deletePath
- */
-function deleteHardcodedRequires(data: IFileData, deletePath: string) {
-  if (data[deletePath]) {
-    Object.keys(data).forEach((p) => {
-      const requires = data[p].requires;
-      if (requires) {
-        data[p].requires = requires.filter(
-          (x) => path.join(path.dirname(p), x) !== deletePath,
-        );
-      }
-    });
-    delete data[deletePath];
-  }
-}
-
-function saveToS3(
-  dependency: { name: string; version: string },
-  response: object,
-) {
-  if (!BUCKET_NAME) {
-    throw new Error("No bucket has been specified");
-  }
-
-  console.log(`Saving ${dependency} to S3`);
-  s3.putObject(
-    {
-      Body: zlib.gzipSync(JSON.stringify(response)),
-      Bucket: BUCKET_NAME,
-      Key: `v${VERSION}/packages/${dependency.name}/${dependency.version}.json`,
-      ACL: "public-read",
-      ContentType: "application/json",
-      CacheControl: "public, max-age=31536000",
-      ContentEncoding: "gzip",
-    },
-    (err) => {
-      if (err) {
-        console.log(err);
-        throw err;
-      }
-    },
-  );
-}
 
 async function getContents(
   dependency: any,
@@ -147,7 +79,7 @@ function verifyModuleField(pkg: IPackage, pkgLoc: string) {
 
 let packaging = false;
 
-export async function call(event: any, context: Context, cb: Callback) {
+export async function call(event: any, context: any, cb: any) {
   /** Immediate response for WarmUP plugin */
   if (event.source === "serverless-plugin-warmup") {
     console.log("WarmUP - Lambda is warm!");
@@ -172,18 +104,18 @@ export async function call(event: any, context: Context, cb: Callback) {
     try {
       const folders = fs.readdirSync("/tmp");
 
-      folders.forEach((f) => {
+      folders.forEach((f:any) => {
         const p = path.join("/tmp/", f);
         try {
           if (fs.statSync(p).isDirectory() && p !== "/tmp/git") {
             rimraf.sync(p);
           }
         } catch (e) {
-          console.error("Could not delete " + p + ", " + e.message);
+          console.error("Could not delete " + p + ", " + (e as Error).message);
         }
       });
     } catch (e) {
-      console.error("Could not delete dependencies: " + e.message);
+      console.error("Could not delete dependencies: " + (e as Error).message);
       console.log("Continuing packaging...");
     }
   }
@@ -204,11 +136,11 @@ export async function call(event: any, context: Context, cb: Callback) {
 
     console.log(
       "Done - " +
-        (Date.now() - t) +
-        " - " +
-        dependency.name +
-        "@" +
-        dependency.version,
+      (Date.now() - t) +
+      " - " +
+      dependency.name +
+      "@" +
+      dependency.version,
     );
 
     const requireStatements = new Set<string>();
@@ -232,10 +164,6 @@ export async function call(event: any, context: Context, cb: Callback) {
       ),
     };
 
-    if (process.env.IN_LAMBDA) {
-      saveToS3(dependency, response);
-    }
-
     // Cleanup
     try {
       rimraf.sync(packagePath);
@@ -253,78 +181,46 @@ export async function call(event: any, context: Context, cb: Callback) {
     }
 
     console.error("ERROR", e);
-
-    Raven.captureException(e, {
-      tags: {
-        hash,
-        dependency: `${dependency.name}@${dependency.version}`,
-      },
-    });
-
-    if (process.env.IN_LAMBDA) {
-      // We try to call fly, which is a service with much more disk space, retry with this.
-      try {
-        const responseFromFly = await fetch(
-          `https://dependency-packager.fly.dev/${dependency.name}@${dependency.version}`,
-        ).then((x) => x.json());
-
-        if (responseFromFly.error) {
-          throw new Error(responseFromFly.error);
-        }
-
-        if (process.env.IN_LAMBDA) {
-          saveToS3(dependency, responseFromFly);
-        }
-
-        cb(undefined, responseFromFly);
-      } catch (ee) {
-        cb(undefined, { error: e.message });
-      }
-    } else {
-      cb(undefined, { error: e.message });
-    }
-  } finally {
     packaging = false;
   }
 }
 
-const PORT = process.env.PORT || 4545;
-if (!process.env.IN_LAMBDA) {
-  /* tslint:disable no-var-requires */
-  const express = require("express");
-  /* tslint:enable */
-
-  const app = express();
-
-  app.get("/*", (req: any, res: any) => {
-    const packageParts = req.url.replace("/", "").split("@");
-    const version = packageParts.pop();
-
-    const ctx = {} as Context;
-    const dep = { name: packageParts.join("@"), version };
-
-    console.log(dep);
-    call(dep, ctx, (err: any, result: any) => {
-      console.log(err);
-
-      // const size = {};
-
-      // console.log(result.contents);
-
-      // Object.keys(result.contents).forEach(p => {
-      //   size[p] =
-      //     result.contents[p].content && result.contents[p].content.length;
-      // });
-
-      if (result.error) {
-        res.status(422).json(result);
-      } else {
-        res.json(result);
-      }
-    });
-  });
-
-  app.listen(PORT, () => {
-    console.log("Listening on " + PORT);
-  });
-}
+// const PORT = process.env.PORT || 4545;
+//
+// /* tslint:disable no-var-requires */
+// const express = require("express");
+// /* tslint:enable */
+//
+// const app = express();
+//
+// app.get("/*", (req: any, res: any) => {
+//   const packageParts = req.url.replace("/", "").split("@");
+//   const version = packageParts.pop();
+//
+//   const ctx = {} as any;
+//   const dep = { name: packageParts.join("@"), version };
+//
+//   console.log(dep);
+//   call(dep, ctx, (err: any, result: any) => {
+//     console.log(err);
+//
+//     // const size = {};
+//
+//     // console.log(result.contents);
+//
+//     // Object.keys(result.contents).forEach(p => {
+//     //   size[p] =
+//     //     result.contents[p].content && result.contents[p].content.length;
+//     // });
+//
+//     if (result.error) {
+//       res.status(422).json(result);
+//     } else {
+//       res.json(result);
+//     }
+//   });
+// });
+//
+// app.listen(PORT, () => {
+//   console.log("Listening on " + PORT);
+// });
