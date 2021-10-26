@@ -1,5 +1,5 @@
 // @ts-ignore
-import * as walk from "acorn-walk";
+import walk from "acorn-walk";
 import * as meriyah from "meriyah";
 
 export default function exportRequires(code: string) {
@@ -15,7 +15,7 @@ export default function exportRequires(code: string) {
 
   const requires: string[] = [];
 
-  walk.simple(ast, {
+  walk.simple(ast as any, {
     ImportDeclaration(node: meriyah.ESTree.ImportDeclaration) {
       isModule = true;
       // Seems like the typings are wrong in the library
@@ -49,7 +49,7 @@ export default function exportRequires(code: string) {
     CallExpression(node: meriyah.ESTree.CallExpression) {
       if (
         /* require() */ (node.callee.type === "Identifier" &&
-          node.callee.name === "require") ||
+        node.callee.name === "require") ||
         node.callee.type === "Import" ||
         /* require.resolve */ (node.callee.type === "MemberExpression" &&
           node.callee.object.name &&
@@ -73,7 +73,7 @@ export default function exportRequires(code: string) {
         }
       }
     },
-  });
+  } as any);
 
   return { requires, isModule };
 }

@@ -1,5 +1,5 @@
 import { exec } from "child_process";
-import * as npa from "npm-package-arg";
+import npa from "npm-package-arg";
 import { join } from "path";
 
 export default function installDependencies(
@@ -29,7 +29,7 @@ export default function installDependencies(
               : err,
           );
         } else {
-          resolve();
+          resolve(null);
         }
       },
     );
