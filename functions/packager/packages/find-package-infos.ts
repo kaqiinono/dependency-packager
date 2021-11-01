@@ -22,12 +22,12 @@ export interface IPackage {
 function getDirectories(path: string): string[] {
   const directories = fs
     .readdirSync(path)
-    .filter((file) => !file.startsWith("."))
-    .filter((file) => fs.lstatSync(join(path, file)).isDirectory())
-    .map((file) => join(path, file));
+    .filter((file:any) => !file.startsWith("."))
+    .filter((file:any) => fs.lstatSync(join(path, file)).isDirectory())
+    .map((file:any) => join(path, file));
 
   return flatten(
-    directories.map((directory) => {
+    directories.map((directory:any) => {
       if (basename(directory).startsWith("@")) {
         // We will check what inside this directory if it starts with an @, because
         // this means that it's under an organization

@@ -1,7 +1,7 @@
 import * as JSON5 from "json5";
 import { flatten } from "lodash";
 import { fs } from "mz";
-import { dirname, join } from "path";
+import { join } from "path";
 import * as recursiveReaddir from "recursive-readdir";
 import { IPackage } from "./find-package-infos";
 import { IFileData } from "./find-requires";
@@ -41,7 +41,7 @@ export async function getReasonFiles(
 
       const bsConfig = await fs
         .readFile(bsConfigPath)
-        .then((data) => JSON5.parse(data.toString()));
+        .then((data: any) => JSON5.parse(data.toString()));
 
       const sources: Array<string | DirSpec> =
         typeof bsConfig.sources === "string"
@@ -86,12 +86,12 @@ export async function getReasonFiles(
       return Promise.all(
         flattenedSources.map(async (directory) => {
           const reFiles = (await fs.readdir(directory))
-            .map((x) => join(directory, x))
-            .filter((x) => fs.lstatSync(x).isFile())
-            .filter((x) => /\.rei?$/.test(x) || /\.mli?$/.test(x));
+            .map((x:any) => join(directory, x))
+            .filter((x:any) => fs.lstatSync(x).isFile())
+            .filter((x:any) => /\.rei?$/.test(x) || /\.mli?$/.test(x));
 
           return Promise.all(
-            reFiles.map(async (filePath) => {
+            reFiles.map(async (filePath:any) => {
               const fileContents = await fs.readFile(filePath);
               files[filePath] = {
                 content: fileContents.toString(),

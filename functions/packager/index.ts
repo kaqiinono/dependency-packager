@@ -1,32 +1,29 @@
-import { Callback, Context } from "aws-lambda";
-import { S3 } from "aws-sdk";
-
-import { fs } from "mz";
+import {Callback, Context} from "aws-lambda";
+import {fs} from "mz";
 import * as path from "path";
 import * as Raven from "raven";
 import * as rimraf from "rimraf";
 import * as zlib from "zlib";
 import fetch from "node-fetch";
+import S3 from './utils/S3'
 
 import findDependencyDependencies from "./dependencies/find-dependency-dependencies";
 import installDependencies from "./dependencies/install-dependencies";
 
-import findPackageInfos, { IPackage } from "./packages/find-package-infos";
-import findRequires, { IFileData } from "./packages/find-requires";
+import findPackageInfos, {IPackage} from "./packages/find-package-infos";
+import findRequires, {IFileData} from "./packages/find-requires";
 
 import getHash from "./utils/get-hash";
 
-import { VERSION } from "../config";
-import env from "./config.secret";
-import resolve = require("resolve");
-import { packageFilter } from "./utils/resolver";
+import {VERSION} from "../config";
+// import env from "./config.secret";
 
-const { BUCKET_NAME } = process.env;
-const SAVE_TO_S3 = !process.env.DISABLE_CACHING;
-
-if (env.SENTRY_URL) {
-  Raven.config(env.SENTRY_URL!).install();
-}
+// const {BUCKET_NAME} = process.env;
+// const SAVE_TO_S3 = !process.env.DISABLE_CACHING;
+//
+// if (env.SENTRY_URL) {
+//   Raven.config(env.SENTRY_URL!).install();
+// }
 
 const s3 = new S3();
 
@@ -54,15 +51,15 @@ function saveToS3(
   dependency: { name: string; version: string },
   response: object,
 ) {
-  if (!BUCKET_NAME) {
-    throw new Error("No bucket has been specified");
-  }
+  // if (!BUCKET_NAME) {
+  //   throw new Error("No bucket has been specified");
+  // }
 
   console.log(`Saving ${dependency} to S3`);
   s3.putObject(
     {
       Body: zlib.gzipSync(JSON.stringify(response)),
-      Bucket: BUCKET_NAME,
+      Bucket: 'BUCKET_NAME',
       Key: `v${VERSION}/packages/${dependency.name}/${dependency.version}.json`,
       ACL: "public-read",
       ContentType: "application/json",
@@ -109,7 +106,7 @@ async function getContents(
   //   "/node_modules/react-dom/cjs/react-dom.production.min.js",
   // );
 
-  return { ...contents, ...packageJSONFiles };
+  return {...contents, ...packageJSONFiles};
 }
 
 /**
@@ -204,11 +201,11 @@ export async function call(event: any, context: Context, cb: Callback) {
 
     console.log(
       "Done - " +
-        (Date.now() - t) +
-        " - " +
-        dependency.name +
-        "@" +
-        dependency.version,
+      (Date.now() - t) +
+      " - " +
+      dependency.name +
+      "@" +
+      dependency.version,
     );
 
     const requireStatements = new Set<string>();
@@ -278,53 +275,56 @@ export async function call(event: any, context: Context, cb: Callback) {
 
         cb(undefined, responseFromFly);
       } catch (ee) {
-        cb(undefined, { error: e.message });
+        cb(undefined, {error: e.message});
       }
     } else {
-      cb(undefined, { error: e.message });
+      cb(undefined, {error: e.message});
     }
   } finally {
     packaging = false;
   }
 }
 
-const PORT = process.env.PORT || 4545;
-if (!process.env.IN_LAMBDA) {
-  /* tslint:disable no-var-requires */
-  const express = require("express");
-  /* tslint:enable */
+// const PORT = process.env.PORT || 4545;
+// if (!process.env.IN_LAMBDA) {
+/* tslint:disable no-var-requires */
+// const express = require("express");
+/* tslint:enable */
 
-  const app = express();
+// const app = express();
 
-  app.get("/*", (req: any, res: any) => {
-    const packageParts = req.url.replace("/", "").split("@");
-    const version = packageParts.pop();
+// app.get("/*", (req: any, res: any) => {
+const srouce = '@jd//frameless-ui@1.0.14';
+const packageParts = srouce.replace("/", "").split("@");
+const version = packageParts.pop();
 
-    const ctx = {} as Context;
-    const dep = { name: packageParts.join("@"), version };
+const ctx = {} as Context;
+const dep = {name: packageParts.join("@"), version};
 
-    console.log(dep);
-    call(dep, ctx, (err: any, result: any) => {
-      console.log(err);
+console.log(dep);
+call(dep, ctx, (err: any, result: any) => {
+  console.log(err);
 
-      // const size = {};
+  // const size = {};
 
-      // console.log(result.contents);
+  // console.log(result.contents);
 
-      // Object.keys(result.contents).forEach(p => {
-      //   size[p] =
-      //     result.contents[p].content && result.contents[p].content.length;
-      // });
+  // Object.keys(result.contents).forEach(p => {
+  //   size[p] =
+  //     result.contents[p].content && result.contents[p].content.length;
+  // });
 
-      if (result.error) {
-        res.status(422).json(result);
-      } else {
-        res.json(result);
-      }
-    });
-  });
+  // if (result.error) {
+  //   res.status(422).json(result);
+  // } else {
+  //   res.json(result);
+  // }
 
-  app.listen(PORT, () => {
-    console.log("Listening on " + PORT);
-  });
-}
+  s3.saveResult(result)
+});
+// });
+
+// app.listen(PORT, () => {
+//   console.log("Listening on " + PORT);
+// });
+// }

@@ -1,16 +1,16 @@
 import { fs } from "mz";
 import { dirname, join } from "path";
+// @ts-ignore
+import * as readFiles from "recursive-readdir-sync";
+
+import * as resolve from "resolve";
+import { packageFilter } from "../utils/resolver";
 
 import { IPackage } from "./find-package-infos";
+import { getReasonFiles, isReason } from "./reason-downloader";
 import resolveRequiredFiles from "./resolve-required-files";
 import extractRequires from "./utils/extract-requires";
 import nodeResolvePath from "./utils/node-resolve-path";
-
-import * as resolve from "resolve";
-// @ts-ignore
-import * as readFiles from "recursive-readdir-sync";
-import { getReasonFiles, isReason } from "./reason-downloader";
-import { packageFilter } from "../utils/resolver";
 
 interface IAliases {
   [alias: string]: string | false | null;
@@ -160,12 +160,12 @@ export default async function findRequires(
       !packageInfos[packageJSONPath].unpkg)
       ? {}
       : Object.keys(files).reduce(
-          (total, next) => ({
-            ...total,
-            [next.replace(rootPath, "")]: files[next],
-          }),
-          {},
-        );
+      (total, next) => ({
+        ...total,
+        [next.replace(rootPath, "")]: files[next],
+      }),
+      {},
+      );
 
   return relativeFiles;
 }

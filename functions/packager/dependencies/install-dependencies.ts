@@ -20,7 +20,7 @@ export default function installDependencies(
         "cli",
       )} add ${depString} ${
         spec.type === "git" ? "" : "--ignore-scripts"
-      } --no-lockfile --non-interactive --no-bin-links --ignore-engines --skip-integrity-check --cache-folder ./`,
+      } --no-lockfile --non-interactive --no-bin-links --ignore-engines --skip-integrity-check --cache-folder ./ --registry=http://registry.m.jd.com`,
       (err, stdout, stderr) => {
         if (err) {
           reject(
@@ -29,7 +29,7 @@ export default function installDependencies(
               : err,
           );
         } else {
-          resolve();
+          resolve(null);
         }
       },
     );
