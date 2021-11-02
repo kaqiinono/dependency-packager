@@ -285,46 +285,46 @@ export async function call(event: any, context: Context, cb: Callback) {
   }
 }
 
-// const PORT = process.env.PORT || 4545;
-// if (!process.env.IN_LAMBDA) {
-/* tslint:disable no-var-requires */
-// const express = require("express");
-/* tslint:enable */
-
-// const app = express();
-
-// app.get("/*", (req: any, res: any) => {
-const srouce = '@jd//frameless-ui@1.0.14';
-const packageParts = srouce.replace("/", "").split("@");
-const version = packageParts.pop();
-
-const ctx = {} as Context;
-const dep = {name: packageParts.join("@"), version};
-
-console.log(dep);
-call(dep, ctx, (err: any, result: any) => {
-  console.log(err);
-
-  // const size = {};
-
-  // console.log(result.contents);
-
-  // Object.keys(result.contents).forEach(p => {
-  //   size[p] =
-  //     result.contents[p].content && result.contents[p].content.length;
-  // });
-
-  // if (result.error) {
-  //   res.status(422).json(result);
-  // } else {
-  //   res.json(result);
-  // }
-
-  s3.saveResult(result)
-});
+// // const PORT = process.env.PORT || 4545;
+// // if (!process.env.IN_LAMBDA) {
+// /* tslint:disable no-var-requires */
+// // const express = require("express");
+// /* tslint:enable */
+//
+// // const app = express();
+//
+// // app.get("/*", (req: any, res: any) => {
+// const srouce = '@jd//frameless-ui@1.0.14';
+// const packageParts = srouce.replace("/", "").split("@");
+// const version = packageParts.pop();
+//
+// const ctx = {} as Context;
+// const dep = {name: packageParts.join("@"), version};
+//
+// console.log(dep);
+// call(dep, ctx, (err: any, result: any) => {
+//   console.log(err);
+//
+//   // const size = {};
+//
+//   // console.log(result.contents);
+//
+//   // Object.keys(result.contents).forEach(p => {
+//   //   size[p] =
+//   //     result.contents[p].content && result.contents[p].content.length;
+//   // });
+//
+//   // if (result.error) {
+//   //   res.status(422).json(result);
+//   // } else {
+//   //   res.json(result);
+//   // }
+//
+//   s3.saveResult(result)
 // });
-
-// app.listen(PORT, () => {
-//   console.log("Listening on " + PORT);
-// });
-// }
+// // });
+//
+// // app.listen(PORT, () => {
+// //   console.log("Listening on " + PORT);
+// // });
+// // }

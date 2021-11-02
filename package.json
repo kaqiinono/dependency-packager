@@ -1,6 +1,6 @@
 {
   "name": "packager",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "./src/index.js",
   "license": "MIT",
   "scripts": {
@@ -9,6 +9,7 @@
     "deploy:prod": "npm run build && serverless deploy -s prod",
     "deploy:dev": "npm run build && serverless deploy -s dev",
     "test": "jest",
+    "patch": "npm version patch -m 'Update Version patch by NPM' | xargs git push origin && git push",
     "test:watch": "jest --watch"
   },
   "dependencies": {
