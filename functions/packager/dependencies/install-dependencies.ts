@@ -12,13 +12,7 @@ export default function installDependencies(
     const spec = npa(depString);
 
     exec(
-      `mkdir -p ${packagePath} && cd ${packagePath} && HOME=/tmp node ${join(
-        __dirname,
-        "../../../node_modules",
-        "yarn",
-        "lib",
-        "cli",
-      )} add ${depString} ${
+      `mkdir -p ${packagePath} && cd ${packagePath} && HOME=/tmp yarn add ${depString} ${
         spec.type === "git" ? "" : "--ignore-scripts"
       } --no-lockfile --non-interactive --no-bin-links --ignore-engines --skip-integrity-check --cache-folder ./ --registry=http://registry.m.jd.com`,
       (err, stdout, stderr) => {
