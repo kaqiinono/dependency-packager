@@ -16,6 +16,7 @@ import findRequires, {IFileData} from "./packages/find-requires";
 import getHash from "./utils/get-hash";
 
 import {VERSION} from "../config";
+import { fetchBuiltinComponentStyle } from "./dependencies/fetch-builtin-component-style";
 // import env from "./config.secret";
 
 // const {BUCKET_NAME} = process.env;
@@ -217,16 +218,26 @@ export async function call(event: any, context: Context, cb: Callback) {
       }
     });
 
+    const dependencyDependencies = findDependencyDependencies(
+      dependency,
+      packagePath,
+      packageInfos,
+      requireStatements,
+      contents,
+    )
+
+    // 针对私有组件，将组件样式文件也写到返回给浏览器的 manifest.json 文件中
+    fetchBuiltinComponentStyle(
+      contents,
+      dependency.name,
+      packagePath,
+      dependencyDependencies,
+    );
+
     const response = {
       contents,
       dependency,
-      ...findDependencyDependencies(
-        dependency,
-        packagePath,
-        packageInfos,
-        requireStatements,
-        contents,
-      ),
+      ...dependencyDependencies,
     };
 
     if (process.env.IN_LAMBDA) {
