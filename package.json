@@ -1,5 +1,5 @@
 {
-  "name": "dependency-packager-api",
+  "name": "codesandbox-dependency-packager-api",
   "version": "1.0.7",
   "main": "./src/index.js",
   "license": "MIT",
