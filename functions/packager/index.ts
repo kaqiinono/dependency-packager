@@ -17,6 +17,7 @@ import getHash from "./utils/get-hash";
 
 import {VERSION} from "../config";
 import { fetchBuiltinComponentStyle } from "./dependencies/fetch-builtin-component-style";
+import { join } from "path";
 // import env from "./config.secret";
 
 // const {BUCKET_NAME} = process.env;
@@ -234,6 +235,11 @@ export async function call(event: any, context: Context, cb: Callback) {
       dependencyDependencies,
     );
 
+    const css = contents[join(`/node_modules/${dependency.name}`,dependency.css)]
+    if(dependency.css && css){
+      // sandbox-client会自动读取dist目录下的index.css文件作为主要样式进行自动引入
+      contents[`/node_modules/${dependency.name}/dist/index.css`] = css;
+    }
     const response = {
       contents,
       dependency,
