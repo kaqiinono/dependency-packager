@@ -1,0 +1,4 @@
+npm run patch
+npm run build
+cd dist
+npm publish
