@@ -1,7 +1,7 @@
 {
   "name": "codesandbox-dependency-packager-api",
-  "version": "1.0.7",
-  "main": "./src/index.js",
+  "version": "1.0.10",
+  "main": "./functions/packager/index.ts",
   "license": "MIT",
   "scripts": {
     "dev": "LOCAL=true nodemon dist/packager",
@@ -9,7 +9,7 @@
     "deploy:prod": "npm run build && serverless deploy -s prod",
     "deploy:dev": "npm run build && serverless deploy -s dev",
     "test": "jest",
-    "patch": "npm version patch -m 'Update Version patch by NPM' | xargs git push origin && git push",
+    "patch": "npm version patch -m 'Update_version' | xargs git push origin && git push",
     "test:watch": "jest --watch"
   },
   "dependencies": {

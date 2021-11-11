@@ -82,7 +82,7 @@ async function getContents(
   packageInfos: { [p: string]: IPackage },
 ): Promise<IFileData> {
   const contents = await findRequires(
-    dependency.name,
+    dependency,
     packagePath,
     packageInfos,
   );
@@ -297,7 +297,11 @@ export async function call(event: any, context: Context, cb: Callback) {
 }
 
 
-// call({name:'@jd/jmtd',version:'1.27.0'}, {} as any, (err, result) => {
+// call({name:'@jd/jmtd',version:'1.27.0',css:'dist/themes/datamill.css'}, {} as any, (err, result) => {
 //   console.log(err);
-//   console.log(result)
+//   s3.saveResult(result);
+//   // console.log(result);
 // });
+
+
+export default call;

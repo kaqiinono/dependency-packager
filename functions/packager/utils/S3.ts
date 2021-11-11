@@ -7,7 +7,7 @@ class S3 {
   };
 
   saveResult(params: any): void {
-    fs.writeFileSync(join('/tmp','saveResult.json'), JSON.stringify(params))
+    fs.writeFileSync(join(__dirname,'saveResult.json'), JSON.stringify(params))
   }
 }
 
