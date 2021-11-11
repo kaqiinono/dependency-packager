@@ -141,9 +141,7 @@ export default async function resolveRequiredFiles(
   const isValidFileTest = isValidFile(entryDir, packageInfo);
   // I removed this optimization Our browser and caching strategy is nowadays so sophisticated that
   // this only introduces unnecessary bagage.
-  const files: string[] = true
-    ? []
-    : ((await getFilePathsInDirectory(entryDir))
+  const files: string[] =  ((await getFilePathsInDirectory(entryDir))
         .filter(isValidFileTest)
         .map((path) => {
           if (typeof browserAliases === "object") {
