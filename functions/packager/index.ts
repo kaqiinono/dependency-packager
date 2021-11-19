@@ -1,81 +1,18 @@
-import {Callback, Context} from "aws-lambda";
-import {fs} from "mz";
+import { Callback, Context } from "aws-lambda";
+import { fs } from "mz";
+import fetch from "node-fetch";
 import * as path from "path";
+import { join } from "path";
 import * as Raven from "raven";
 import * as rimraf from "rimraf";
-import * as zlib from "zlib";
-import fetch from "node-fetch";
-import S3 from './utils/S3'
-
+import { fetchBuiltinComponentStyle } from "./dependencies/fetch-builtin-component-style";
 import findDependencyDependencies from "./dependencies/find-dependency-dependencies";
 import installDependencies from "./dependencies/install-dependencies";
 
-import findPackageInfos, {IPackage} from "./packages/find-package-infos";
-import findRequires, {IFileData} from "./packages/find-requires";
-
+import findPackageInfos, { IPackage } from "./packages/find-package-infos";
+import findRequires, { IFileData } from "./packages/find-requires";
 import getHash from "./utils/get-hash";
 
-import {VERSION} from "../config";
-import { fetchBuiltinComponentStyle } from "./dependencies/fetch-builtin-component-style";
-import { join } from "path";
-// import env from "./config.secret";
-
-// const {BUCKET_NAME} = process.env;
-// const SAVE_TO_S3 = !process.env.DISABLE_CACHING;
-//
-// if (env.SENTRY_URL) {
-//   Raven.config(env.SENTRY_URL!).install();
-// }
-
-const s3 = new S3();
-
-/**
- * Remove a file from the content
- *
- * @param {IFileData} data
- * @param {string} deletePath
- */
-function deleteHardcodedRequires(data: IFileData, deletePath: string) {
-  if (data[deletePath]) {
-    Object.keys(data).forEach((p) => {
-      const requires = data[p].requires;
-      if (requires) {
-        data[p].requires = requires.filter(
-          (x) => path.join(path.dirname(p), x) !== deletePath,
-        );
-      }
-    });
-    delete data[deletePath];
-  }
-}
-
-function saveToS3(
-  dependency: { name: string; version: string },
-  response: object,
-) {
-  // if (!BUCKET_NAME) {
-  //   throw new Error("No bucket has been specified");
-  // }
-
-  console.log(`Saving ${dependency} to S3`);
-  s3.putObject(
-    {
-      Body: zlib.gzipSync(JSON.stringify(response)),
-      Bucket: 'BUCKET_NAME',
-      Key: `v${VERSION}/packages/${dependency.name}/${dependency.version}.json`,
-      ACL: "public-read",
-      ContentType: "application/json",
-      CacheControl: "public, max-age=31536000",
-      ContentEncoding: "gzip",
-    },
-    (err) => {
-      if (err) {
-        console.log(err);
-        throw err;
-      }
-    },
-  );
-}
 
 async function getContents(
   dependency: any,
@@ -108,7 +45,7 @@ async function getContents(
   //   "/node_modules/react-dom/cjs/react-dom.production.min.js",
   // );
 
-  return {...contents, ...packageJSONFiles};
+  return { ...contents, ...packageJSONFiles };
 }
 
 /**
@@ -163,6 +100,7 @@ export async function call(event: any, context: Context, cb: Callback) {
   if (!dependency) {
     return;
   }
+
   const packagePath = path.join("/tmp", hash);
 
   // Cleanup!
@@ -225,7 +163,7 @@ export async function call(event: any, context: Context, cb: Callback) {
       packageInfos,
       requireStatements,
       contents,
-    )
+    );
 
     // 针对私有组件，将组件样式文件也写到返回给浏览器的 manifest.json 文件中
     fetchBuiltinComponentStyle(
@@ -235,8 +173,8 @@ export async function call(event: any, context: Context, cb: Callback) {
       dependencyDependencies,
     );
 
-    const css = contents[join(`/node_modules/${dependency.name}`,dependency.css)]
-    if(dependency.css && css){
+    const css = contents[join(`/node_modules/${dependency.name}`, dependency.css)];
+    if (dependency.css && css) {
       // sandbox-client会自动读取dist目录下的index.css文件作为主要样式进行自动引入
       contents[`/node_modules/${dependency.name}/dist/index.css`] = css;
     }
@@ -245,10 +183,6 @@ export async function call(event: any, context: Context, cb: Callback) {
       dependency,
       ...dependencyDependencies,
     };
-
-    if (process.env.IN_LAMBDA) {
-      saveToS3(dependency, response);
-    }
 
     // Cleanup
     try {
@@ -286,26 +220,27 @@ export async function call(event: any, context: Context, cb: Callback) {
           throw new Error(responseFromFly.error);
         }
 
-        if (process.env.IN_LAMBDA) {
-          saveToS3(dependency, responseFromFly);
-        }
-
         cb(undefined, responseFromFly);
       } catch (ee) {
-        cb(undefined, {error: e.message});
+        cb(undefined, { error: e.message });
       }
     } else {
-      cb(undefined, {error: e.message});
+      cb(undefined, { error: e.message });
     }
   } finally {
     packaging = false;
   }
 }
 
-
-// call({name:'@jd/jmtd',version:'1.27.0',css:'dist/themes/datamill.css'}, {} as any, (err, result) => {
+//
+// call({
+//   name: "@jd/jmtd",
+//   version: "latest",
+//   css: "dist/themes/datamill.css",
+//   nodePath: path.resolve(__dirname, "../../node_modules"),
+// }, {} as any, (err, result) => {
 //   console.log(err);
-//   s3.saveResult(result);
+//   // s3.saveResult(result);
 //   // console.log(result);
 // });
 
