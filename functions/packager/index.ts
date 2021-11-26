@@ -1,16 +1,14 @@
-import { Callback, Context } from "aws-lambda";
-import { fs } from "mz";
-import fetch from "node-fetch";
+import {Callback, Context} from "aws-lambda";
+import {fs} from "mz";
 import * as path from "path";
-import { join } from "path";
 import * as Raven from "raven";
 import * as rimraf from "rimraf";
-import { fetchBuiltinComponentStyle } from "./dependencies/fetch-builtin-component-style";
+import {fetchBuiltinComponentStyle} from "./dependencies/fetch-builtin-component-style";
 import findDependencyDependencies from "./dependencies/find-dependency-dependencies";
 import installDependencies from "./dependencies/install-dependencies";
 
-import findPackageInfos, { IPackage } from "./packages/find-package-infos";
-import findRequires, { IFileData } from "./packages/find-requires";
+import findPackageInfos, {IPackage} from "./packages/find-package-infos";
+import findRequires, {IFileData} from "./packages/find-requires";
 import getHash from "./utils/get-hash";
 
 
@@ -45,7 +43,7 @@ async function getContents(
   //   "/node_modules/react-dom/cjs/react-dom.production.min.js",
   // );
 
-  return { ...contents, ...packageJSONFiles };
+  return {...contents, ...packageJSONFiles};
 }
 
 /**
@@ -127,7 +125,7 @@ export async function call(event: any, context: Context, cb: Callback) {
 
   packaging = true;
   try {
-    await installDependencies(dependency, packagePath);
+    const finalVersion = await installDependencies(dependency, packagePath);
 
     const packageInfos = await findPackageInfos(dependency.name, packagePath);
 
@@ -173,15 +171,18 @@ export async function call(event: any, context: Context, cb: Callback) {
       dependencyDependencies,
     );
 
-    const css = contents[join(`/node_modules/${dependency.name}`, dependency.css)];
-    if (dependency.css && css) {
-      // sandbox-client会自动读取dist目录下的index.css文件作为主要样式进行自动引入
-      contents[`/node_modules/${dependency.name}/dist/index.css`] = css;
-    }
+    // const css = contents[path.join(`/node_modules/${dependency.name}`, dependency.css)];
+    // if (dependency.css && css) {
+    //   // sandbox-client会自动读取dist目录下的index.css文件作为主要样式进行自动引入
+    //   contents[`/node_modules/${dependency.name}/dist/index.css`] = css;
+    // }
     const response = {
-      contents,
-      dependency,
-      ...dependencyDependencies,
+      source: {
+        contents,
+        dependency,
+        ...dependencyDependencies,
+      },
+      version: finalVersion
     };
 
     // Cleanup
@@ -209,24 +210,7 @@ export async function call(event: any, context: Context, cb: Callback) {
       },
     });
 
-    if (process.env.IN_LAMBDA) {
-      // We try to call fly, which is a service with much more disk space, retry with this.
-      try {
-        const responseFromFly = await fetch(
-          `https://dependency-packager.fly.dev/${dependency.name}@${dependency.version}`,
-        ).then((x) => x.json());
-
-        if (responseFromFly.error) {
-          throw new Error(responseFromFly.error);
-        }
-
-        cb(undefined, responseFromFly);
-      } catch (ee) {
-        cb(undefined, { error: e.message });
-      }
-    } else {
-      cb(undefined, { error: e.message });
-    }
+    cb(undefined, {error: e.message});
   } finally {
     packaging = false;
   }
@@ -236,10 +220,11 @@ export async function call(event: any, context: Context, cb: Callback) {
 // call({
 //   name: "@jd/jmtd",
 //   version: "latest",
-//   css: "dist/themes/datamill.css",
-//   nodePath: path.resolve(__dirname, "../../node_modules"),
+//   // css: "dist/themes/datamill.css",
+//   nodePath: null,
 // }, {} as any, (err, result) => {
 //   console.log(err);
+//   console.log('====>', result.version);
 //   // s3.saveResult(result);
 //   // console.log(result);
 // });

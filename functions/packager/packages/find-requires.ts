@@ -112,7 +112,7 @@ function getFileData(filePath: string, existingContents: IFileData) {
   return fileData;
 }
 
-export default async function findRequires(
+async function findRequires(
   dependency: { name: string; version: string, css: string },
   rootPath: string,
   packageInfos: { [dep: string]: IPackage },
@@ -135,14 +135,10 @@ export default async function findRequires(
     packageInfos[packageJSONPath],
   );
 
-  const cssPath = join(packagePath, dependency.css);
-  try {
-    if (dependency.css && fs.statSync(cssPath)) {
-      requiredFiles.push(join(packagePath, dependency.css));
-    }
-  } catch (e) {
-    console.warn(cssPath, ' not exists!');
-  }
+  // if (dependency.css) {
+  //   const cssPath = join(packagePath, dependency.css);
+  //   fs.statSync(cssPath) && requiredFiles.push(join(packagePath, dependency.css));
+  // }
 
 
   let files: IFileData = {};
@@ -180,3 +176,5 @@ export default async function findRequires(
 
   return relativeFiles;
 }
+
+export default findRequires;

@@ -1,7 +1,7 @@
-import { exec } from "child_process";
-import * as fs from "fs";
+import {fs} from "mz";
 import * as npa from "npm-package-arg";
-import { join } from "path";
+import * as path from "path";
+import * as shelljs from "shelljs";
 
 export default function installDependencies(
   dependency: { name: string; version: string, nodePath: string },
@@ -12,26 +12,31 @@ export default function installDependencies(
 
     const spec = npa(depString);
 
-    exec(
-      `mkdir -p ${packagePath} && cd ${packagePath} && HOME=/tmp node ${join(
-        dependency.nodePath,
+    let nodePath = dependency.nodePath;
+    if (!nodePath || !fs.statSync(nodePath)) {
+      nodePath = path.resolve(__dirname, '../../../node_modules');
+      if (!fs.statSync(nodePath)) {
+        debugger
+        reject('node_modules folder is not found!')
+      }
+    }
+
+    const run = shelljs.exec(
+      `mkdir -p ${packagePath} && cd ${packagePath} && HOME=/tmp node ${path.join(
+        nodePath,
         "yarn",
         "lib",
         "cli",
       )} add ${depString} ${
         spec.type === "git" ? "" : "--ignore-scripts"
-      } --no-lockfile --non-interactive --no-bin-links --ignore-engines --skip-integrity-check --cache-folder ./ --registry=http://registry.m.jd.com`,
-      (err, stdout, stderr) => {
-        if (err) {
-          reject(
-            err.message.indexOf("versions") >= 0
-              ? new Error("INVALID_VERSION")
-              : err,
-          );
-        } else {
-          resolve(null);
-        }
-      },
+      } --no-lockfile --non-interactive --no-bin-links --ignore-engines --skip-integrity-check --cache-folder ./ --registry=http://registry.m.jd.com`
     );
+    if (run.code !== 0) {
+      reject(run.stdout);
+    } else {
+      const pattr = new RegExp(`${dependency.name.replace('/','\/')}@(.*)`)
+      const match = run.stdout.match(pattr);
+      resolve(match && match[1]);
+    }
   });
 }
