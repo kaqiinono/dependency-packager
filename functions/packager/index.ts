@@ -171,11 +171,12 @@ export async function call(event: any, context: Context, cb: Callback) {
       dependencyDependencies,
     );
 
-    // const css = contents[path.join(`/node_modules/${dependency.name}`, dependency.css)];
-    // if (dependency.css && css) {
-    //   // sandbox-client会自动读取dist目录下的index.css文件作为主要样式进行自动引入
-    //   contents[`/node_modules/${dependency.name}/dist/index.css`] = css;
-    // }
+    const css = contents[path.join(`/node_modules/${dependency.name}`, dependency.css)];
+    if (dependency.css && css) {
+      // sandbox-client会自动读取dist目录下的index.css文件作为主要样式进行自动引入
+      contents[`/node_modules/${dependency.name}/dist/index.css`] = css;
+      console.log('css',contents[`/node_modules/${dependency.name}/dist/index.css`])
+    }
     const response = {
       source: {
         contents,
@@ -216,11 +217,11 @@ export async function call(event: any, context: Context, cb: Callback) {
   }
 }
 
-//
+
 // call({
-//   name: "@jd/jmtd",
-//   version: "latest",
-//   // css: "dist/themes/datamill.css",
+//   name: "@jd/jmtd-pro",
+//   version: "1.27.0",
+//   css: "dist/themes/datamill.css",
 //   nodePath: null,
 // }, {} as any, (err, result) => {
 //   console.log(err);
