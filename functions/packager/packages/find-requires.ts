@@ -137,7 +137,7 @@ async function findRequires(
 
   if (dependency.css) {
     const cssPath = join(packagePath, dependency.css);
-    fs.exists(cssPath) && requiredFiles.push(join(packagePath, dependency.css));
+    fs.existsSync(cssPath) && requiredFiles.push(join(packagePath, dependency.css));
   }
 
 
