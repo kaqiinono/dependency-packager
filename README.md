@@ -5,22 +5,24 @@
 ## Installing
 
 ```
-npm install codesandbox-dependency-packager-api --save
-yarn add codesandbox-dependency-packager-api --save
+npm install codesandbox-dependency-packager --save
+yarn add codesandbox-dependency-packager --save
 ```
 
 ## How To Use
 ```
-const { call } = require('codesandbox-dependency-packager-api/packager');
+const { call } = require('codesandbox-dependency-packager/packager');
 
-call(dep, ctx, (err, result) => {
-    console.log(err);
-
-    if (result.error) {
-        res.status(422).json(result);
-    } else {
-        cacheDependency(dep, result);
-        res.json(readJsonFile(cache));
-    }
+call({
+  name: "@jd/jmtd-pro",
+  version: "1.27.0",
+  css: "dist/themes/datamill.css",
+  nodePath: null,
+}, {} as any, (err, result) => {
+  console.log(err);
+  console.log('====>', result.version);
+  console.log('====>', result.source);
 });
+
+
 ```
