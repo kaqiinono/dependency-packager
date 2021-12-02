@@ -1,5 +1,5 @@
 {
-  "name": "codesandbox-dependency-packager-api",
+  "name": "codesandbox-dependency-packager",
   "version": "1.0.18",
   "main": "./functions/packager/index.ts",
   "license": "MIT",
