@@ -1,13 +1,13 @@
-import {fs} from "mz";
-import {dirname, join} from "path";
+import { fs } from "mz";
+import { dirname, join } from "path";
 // @ts-ignore
 import * as readFiles from "recursive-readdir-sync";
 
 import * as resolve from "resolve";
-import {packageFilter} from "../utils/resolver";
+import { packageFilter } from "../utils/resolver";
 
-import {IPackage} from "./find-package-infos";
-import {getReasonFiles, isReason} from "./reason-downloader";
+import { IPackage } from "./find-package-infos";
+import { getReasonFiles, isReason } from "./reason-downloader";
 import resolveRequiredFiles from "./resolve-required-files";
 import extractRequires from "./utils/extract-requires";
 import nodeResolvePath from "./utils/node-resolve-path";
@@ -25,7 +25,7 @@ export interface IFileData {
 }
 
 function rewritePath(path: string, currentPath: string, packagePath: string) {
-  return resolve.sync(path, {basedir: dirname(currentPath), packageFilter});
+  return resolve.sync(path, { basedir: dirname(currentPath), packageFilter });
 }
 
 function buildRequireObject(
@@ -137,7 +137,7 @@ async function findRequires(
 
   if (dependency.css) {
     const cssPath = join(packagePath, dependency.css);
-    fs.statSync(cssPath) && requiredFiles.push(join(packagePath, dependency.css));
+    fs.exists(cssPath) && requiredFiles.push(join(packagePath, dependency.css));
   }
 
 
@@ -150,7 +150,7 @@ async function findRequires(
   for (const file of requiredFiles) {
     if (file) {
       const newFiles = await buildRequireObject(file, packagePath, files);
-      files = {...files, ...newFiles};
+      files = { ...files, ...newFiles };
     }
   }
 
