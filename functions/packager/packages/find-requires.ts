@@ -135,11 +135,6 @@ async function findRequires(
     packageInfos[packageJSONPath],
   );
 
-  if (dependency.css) {
-    const cssPath = join(packagePath, dependency.css);
-    fs.existsSync(cssPath) && requiredFiles.push(join(packagePath, dependency.css));
-  }
-
 
   let files: IFileData = {};
 
